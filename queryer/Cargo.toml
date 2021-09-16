@@ -1,0 +1,24 @@
+[package]
+name = "queryer"
+version = "0.1.0"
+edition = "2018"
+
+
+[[example]]
+name = "dialect"
+
+[[example]]
+name = "covid"
+
+[dependencies]
+anyhow = "1"
+async-trait = "0.1" # 允许 trait 里有 async fn
+sqlparser = "0.10" # SQL 解析器
+polars = { version = "0.15", features = ["json", "lazy"] } # DataFrame 库
+reqwest = { version = "0.11", default-features = false, features = ["rustls-tls"] }
+tokio = { version = "1", features = ["fs"]}
+tracing = "0.1"
+
+[dev-dependencies]
+tracing-subscriber = "0.2"
+tokio = { version = "1", features = ["full"]} # 在 example 下我们需要更多的 tokio feature
