@@ -2,7 +2,6 @@ use axum::{
     extract::{Path, Extension}, 
     handler::get, 
     http::{StatusCode, HeaderMap, HeaderValue}, 
-    AddExtensionLayer,
     Router,
 };
 use percent_encoding::{percent_decode_str, percent_encode, NON_ALPHANUMERIC}; 
@@ -18,6 +17,9 @@ use bytes::Bytes;
 use lru::LruCache;
 use tokio::sync::Mutex;
 use tower::ServiceBuilder;
+use tower_http::{
+    add_extension::AddExtensionLayer, compression::CompressionLayer, trace::TraceLayer,
+};
 use tracing::{info, instrument};
 
 mod pb;
@@ -26,6 +28,7 @@ mod engine;
 use pb::*;
 use engine::{Engine, Photon};
 use image::ImageOutputFormat;
+use std::time::Duration;
 
 #[derive(Deserialize)]
 struct Params {
@@ -44,7 +47,11 @@ async fn main() {
         .route("/image/:spec/:url", get(generate))
         .layer(
             ServiceBuilder::new()
+                .concurrency_limit(1024)
+                .timeout(Duration::from_secs(10))
+                .layer(TraceLayer::new_for_http())
                 .layer(AddExtensionLayer::new(cache))
+                .layer(CompressionLayer::new())
                 .into_inner(),
         );
     
