@@ -41,6 +41,24 @@ impl CommandService for Hset {
     }
 }
 
+impl CommandService for Hdel {
+    fn execute(self, store: &impl Storage) -> CommandResponse {
+        match store.del(&self.table, &self.key) {
+            Ok(Some(v)) => v.into(),
+            Ok(None) => KvError::NotFound(self.table, self.key).into(),
+            Err(e) => e.into()
+        }
+    }
+}
+
+impl CommandService for Hexist {
+    fn execute(self, store: &impl Storage) -> CommandResponse {
+        match store.contains(&self.table, &self.key) {
+            Ok(v) => v.into(),
+            Err(e) => e.into()
+        }
+    }
+}
 
 pub struct Service<Store = MemTable> {
     inner: Arc<ServiceInner<Store>>
@@ -80,6 +98,8 @@ fn dispatch(cmd: CommandRequest, store: &impl Storage) -> CommandResponse {
         Some(RequestData::Hget(param)) => param.execute(store),
         Some(RequestData::Hgetall(param)) => param.execute(store),
         Some(RequestData::Hset(param)) => param.execute(store),
+        Some(RequestData::Hdel(param)) => param.execute(store),
+        Some(RequestData::Hexists(param)) => param.execute(store),
         None => KvError::InvalidCommand("Request has no data".into()).into(),
         _ => KvError::Internal("Not implemented".into()).into(),
     }
@@ -105,6 +125,16 @@ mod tests {
 
         let res = service.execute(CommandRequest::new_hget("t1", "k1"));
         assert_res_ok(res, &["v1".into()], &[]);
+
+        // 删除
+        let res = service.execute(CommandRequest::new_hdel("t1", "k1"));
+        assert_res_ok(res, &["v1".into()], &[]);
+
+        let res = service.execute(CommandRequest::new_hdel("t1", "k1"));
+        assert_res_error(res, 404, "Not found".into());
+
+        let res = service.execute(CommandRequest::new_hexist("t1", "k1"));
+        assert_res_ok(res, &[false.into()], &[]);
     }
 
     fn assert_res_ok(mut res: CommandResponse, values: &[Value], pairs: &[Kvpair]) {

@@ -34,6 +34,24 @@ impl CommandRequest {
             })),
         }
     }
+
+    pub fn new_hdel(table: impl Into<String>, key: impl Into<String>) -> Self {
+        Self {
+            request_data: Some(RequestData::Hdel(Hdel {
+                table: table.into(),
+                key: key.into(),
+            }))
+        }
+    }
+
+    pub fn new_hexist(table: impl Into<String>, key: impl Into<String>) -> Self {
+        Self {
+            request_data: Some(RequestData::Hexists(Hexist {
+                table: table.into(),
+                key: key.into(),
+            }))
+        }
+    }
 }
 
 impl Kvpair {
@@ -69,9 +87,27 @@ impl From<i64> for Value {
     }
 }
 
+impl From<bool> for Value {
+    fn from(v: bool) -> Self {
+        Self {
+            value: Some(value::Value::Bool(v)),
+        }
+    }
+}
+
 impl fmt::Display for RequestData {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         write!(f, "{:}", self)
+    }
+}
+
+impl From<bool> for CommandResponse {
+    fn from(v: bool) -> Self {
+        Self {
+            status: StatusCode::OK.as_u16() as _,
+            values: vec![v.into()],
+            ..Default::default()
+        }
     }
 }
 
