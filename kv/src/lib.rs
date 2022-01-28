@@ -1,8 +1,18 @@
 mod pb;
+mod storage;
+mod error;
+mod service;
+
 pub use pb::abi::*;
+pub use error::KvError;
+pub use storage::*;
+pub use service::*;
+
+
 
 #[cfg(test)]
 mod tests {
+
     #[test]
     fn it_works() {
         let result = 2 + 2;

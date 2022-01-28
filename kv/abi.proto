@@ -19,7 +19,7 @@ message CommandRequest {
 message CommandResponse {
   uint32 status = 1;
   string message = 2;
-  repeated Value value = 3;
+  repeated Value values = 3;
   repeated Kvpair pairs = 4;
 }
 
